@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+import {default as addMinutes} from 'date-fns/addMinutes';
+import {default as differenceInMinutes} from 'date-fns/differenceInMinutes';
 import {default as formatDate} from 'date-fns/format';
 import {default as parseDate} from 'date-fns/parse';
 
@@ -19,6 +21,8 @@ export interface IDay {
 export type WeekDays = Array<IDay>;
 
 export type Month = Array<WeekDays>;
+
+const timezonePattern = /GMT[+-](0[0-9]|1[0-4]):?[0-5]\d/;
 
 /**
  * Clone a date object.
@@ -81,4 +85,39 @@ export function setMonth(
 	if (range.find((elem) => elem.value === year)) {
 		return date;
 	}
+}
+
+/**
+ * Checks if the timezone is valid according to the expected format.
+ *
+ * @param timezone - The timezone string to validate.
+ */
+export function isTimezoneValid(
+	timezone: string | undefined
+): timezone is string {
+	return !!timezone && timezonePattern.test(timezone);
+}
+
+/**
+ * It returns a equivalent date in the specified timezone. If the given timezone is invalid, it returns the original date instead.
+ *
+ * @param date - The date to be converted.
+ * @param timezone - The target timezone in GMT format (e.g., "GMT+02:00").
+ * @returns the date adjusted to the specified timezone.
+ */
+export function getDateInTimezone(date: Date, timezone: string | undefined) {
+	if (!isTimezoneValid(timezone)) {
+		return addMinutes(date, 0);
+	}
+
+	const dateAsText = date.toString();
+	const dateAsTextWithTimezone = dateAsText.replace(
+		timezonePattern,
+		timezone
+	);
+
+	const dateWithTimezone = new Date(dateAsTextWithTimezone);
+	const offsetInMinutes = differenceInMinutes(date, dateWithTimezone);
+
+	return addMinutes(date, offsetInMinutes);
 }

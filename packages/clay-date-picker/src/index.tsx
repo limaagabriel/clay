@@ -21,6 +21,7 @@ import DayNumber from './DayNumber';
 import DaysTable from './DaysTable';
 import {
 	formatDate,
+	getDateInTimezone,
 	isValid,
 	parseDate,
 	range as createRange,
@@ -561,7 +562,11 @@ const DatePicker = React.forwardRef<HTMLInputElement, IProps>(
 		 * is no date selected.
 		 */
 		const handleDotClicked = () => {
-			const currentDateTime = getDefaultMonth();
+			const currentDateTimeWithSystemTimezone = getDefaultMonth();
+			const currentDateTime = getDateInTimezone(
+				currentDateTimeWithSystemTimezone,
+				timezone
+			);
 
 			const [, endDate] = daysSelected;
 
