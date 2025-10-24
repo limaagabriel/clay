@@ -800,4 +800,76 @@ describe('IncrementalInteractions', () => {
 
 		jest.useRealTimers();
 	});
+
+	it('clicking the dot button with a timezone should set the time according to that timezone', () => {
+		const currentDate = new Date('2025-01-01T22:00:00Z');
+
+		const timezones = [
+			{
+				expectedDate: '2025-01-01',
+				expectedHours: '23',
+				expectedMinutes: '00',
+				value: 'GMT+01:00',
+			},
+			{
+				expectedDate: '2025-01-01',
+				expectedHours: '16',
+				expectedMinutes: '30',
+				value: 'GMT-05:30',
+			},
+			{
+				expectedDate: '2025-01-02',
+				expectedHours: '07',
+				expectedMinutes: '00',
+				value: 'GMT+09:00',
+			},
+			{
+				expectedDate: '2025-01-01',
+				expectedHours: '22',
+				expectedMinutes: '00',
+				value: 'GMT+00:00',
+			},
+			{
+				expectedDate: '2025-01-01',
+				expectedHours: currentDate
+					.getHours()
+					.toString()
+					.padStart(2, '0'),
+				expectedMinutes: currentDate
+					.getMinutes()
+					.toString()
+					.padStart(2, '0'),
+				value: 'GMT+22:00',
+			},
+		];
+
+		jest.useFakeTimers();
+		jest.setSystemTime(currentDate);
+
+		for (const timezone of timezones) {
+			const {getByLabelText, getByTestId, unmount} = render(
+				<ClayDatePicker
+					ariaLabels={ariaLabels}
+					spritemap={spritemap}
+					time
+					timezone={timezone.value}
+				/>
+			);
+
+			const inputEl: any = getByLabelText(ariaLabels.input);
+			const dotButtonEl = getByLabelText(ariaLabels.buttonDot);
+			const minutesEl = getByTestId('minutes');
+			const hoursEl = getByTestId('hours');
+
+			fireEvent.click(dotButtonEl);
+
+			expect(inputEl.value).toContain(timezone.expectedDate);
+			expect(hoursEl).toHaveDisplayValue(timezone.expectedHours);
+			expect(minutesEl).toHaveDisplayValue(timezone.expectedMinutes);
+
+			unmount();
+		}
+
+		jest.useRealTimers();
+	});
 });
