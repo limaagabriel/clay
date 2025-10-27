@@ -22,7 +22,7 @@ export type WeekDays = Array<IDay>;
 
 export type Month = Array<WeekDays>;
 
-const timezonePattern = /GMT[+-](0[0-9]|1[0-4]):?[0-5]\d/;
+const timezonePattern = /GMT([+-])(0[0-9]|1[0-4]):?([0-5]\d)/;
 
 /**
  * Clone a date object.
@@ -106,18 +106,21 @@ export function isTimezoneValid(
  * @returns the date adjusted to the specified timezone.
  */
 export function getDateInTimezone(date: Date, timezone: string | undefined) {
-	if (!isTimezoneValid(timezone)) {
-		return addMinutes(date, 0);
+	const isTimezoneValidResult = isTimezoneValid(timezone);
+	const timezoneGroups =
+		isTimezoneValidResult && timezone?.match(timezonePattern);
+
+	if (!timezoneGroups) {
+		return date;
 	}
 
-	const dateAsText = date.toString();
-	const dateAsTextWithTimezone = dateAsText.replace(
-		timezonePattern,
-		timezone
-	);
+	const sign = timezoneGroups[1] === '+' ? 1 : -1;
+	const hours = parseInt(timezoneGroups[2] ?? '', 10);
+	const minutes = parseInt(timezoneGroups[3] ?? '', 10);
 
-	const dateWithTimezone = new Date(dateAsTextWithTimezone);
-	const offsetInMinutes = differenceInMinutes(date, dateWithTimezone);
+	const dateOffset = date.getTimezoneOffset();
+	const timezoneOffset = sign * (hours * 60 + minutes);
+	const differenceOffset = timezoneOffset + dateOffset;
 
-	return addMinutes(date, offsetInMinutes);
+	return addMinutes(date, differenceOffset);
 }
